@@ -1,253 +1,197 @@
-# Clinica Bello Horizonte - Backend API REST
+# Clínica Bello Horizonte — API REST (Backend)
 
-NestJS + PostgreSQL + Prisma backend for the Clinica Bello Horizonte Flutter mobile application.
-
----
-
-## Tech Stack
-
-- **Framework**: NestJS 10
-- **Database**: PostgreSQL
-- **ORM**: Prisma 5
-- **Auth**: JWT (access + refresh tokens) via Passport
-- **Password hashing**: bcrypt (salt rounds = 10)
-- **Validation**: class-validator + class-transformer
-- **Docs**: Swagger / OpenAPI at `/api/docs`
+API REST desarrollada en **NestJS** para la aplicación móvil de la Clínica Privada Bello Horizonte (Piura, Perú).  
+Gestiona autenticación, citas médicas, médicos, especialidades e historial clínico de pacientes.
 
 ---
 
-## Prerequisites
+## Tecnologías
 
-- Node.js 18+
-- PostgreSQL 14+
-- npm or yarn
+| Componente | Tecnología |
+|-----------|-----------|
+| Framework | NestJS 10 |
+| Base de datos | PostgreSQL 16 |
+| ORM | Prisma 5 |
+| Autenticación | JWT (access + refresh tokens) via Passport |
+| Cifrado | bcrypt (10 rondas de sal) |
+| Validación | class-validator + class-transformer |
+| Documentación | Swagger / OpenAPI en `/api/docs` |
 
 ---
 
-## Setup & Installation
+## Instalación
 
-### 1. Install dependencies
+### 1. Clonar e instalar dependencias
 
 ```bash
+git clone https://github.com/clinica-bello-horizonte/bello-horizonte-backend.git
+cd bello-horizonte-backend
 npm install
 ```
 
-### 2. Configure environment variables
+### 2. Configurar variables de entorno
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and fill in your values:
+Editar `.env` con los valores correctos:
 
 ```env
-DATABASE_URL="postgresql://postgres:your_password@localhost:5432/bello_horizonte_db?schema=public"
-JWT_SECRET="your-super-secret-jwt-key"
-JWT_REFRESH_SECRET="your-super-secret-refresh-key"
+DATABASE_URL="postgresql://usuario:contrasena@localhost:5432/bello_horizonte"
+JWT_SECRET="clave_secreta_jwt"
+JWT_REFRESH_SECRET="clave_secreta_refresh"
 JWT_ACCESS_EXPIRES=15m
 JWT_REFRESH_EXPIRES=7d
 PORT=3000
 NODE_ENV=development
 ```
 
-### 3. Create the PostgreSQL database
-
-```sql
-CREATE DATABASE bello_horizonte_db;
-```
-
-### 4. Run database migrations
+### 3. Iniciar PostgreSQL con Docker
 
 ```bash
-npm run db:migrate
+docker --context desktop-linux compose up -d
 ```
 
-When prompted for a migration name, enter something like `initial_schema`.
+> También puedes usar PostgreSQL instalado localmente ajustando `DATABASE_URL` en `.env`.
 
-### 5. Generate Prisma client
+### 4. Ejecutar migraciones y seed
 
 ```bash
-npm run db:generate
+npx prisma migrate deploy   # aplica migraciones
+npx prisma db seed          # carga datos iniciales
 ```
 
-> Note: `db:migrate` already runs generate automatically, but you can run it separately if needed.
+El seed crea:
+- 12 especialidades médicas
+- 15 médicos con nombres peruanos
+- 1 usuario demo (rol: USER)
+- 1 usuario administrador (rol: ADMIN)
+- 3 registros de historial para el usuario demo
 
-### 6. Seed the database
-
-```bash
-npm run db:seed
-```
-
-This creates:
-- 12 medical specialties
-- 15 doctors with Peruvian names
-- 1 demo user (role: USER)
-- 1 admin user (role: ADMIN)
-- 3 patient records for the demo user
-
-### 7. Start the development server
+### 5. Iniciar el servidor
 
 ```bash
 npm run start:dev
 ```
 
-The server will start at: `http://localhost:3000`
+Servidor disponible en: `http://localhost:3000`  
+Documentación Swagger en: `http://localhost:3000/api/docs`
 
 ---
 
-## Demo Credentials
+## Endpoints principales
 
-> IMPORTANT: Passwords are hashed with bcrypt. These are NOT the same as any SHA-256 hashed passwords that may exist in a local Flutter SQLite database.
+### Autenticación
 
-### Demo User (role: USER)
-- Email: `demo@bellohorizonte.pe`
-- DNI: `00000000`
-- Password: `demo123`
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| POST | `/api/v1/auth/login` | No | Login con DNI o correo |
+| POST | `/api/v1/auth/register` | No | Registro de nuevo paciente |
+| POST | `/api/v1/auth/logout` | JWT | Cerrar sesión |
+| POST | `/api/v1/auth/refresh` | Refresh JWT | Renovar tokens |
+| GET | `/api/v1/auth/me` | JWT | Obtener usuario autenticado |
 
-### Admin User (role: ADMIN)
-- Email: `admin@bellohorizonte.pe`
-- DNI: `11111111`
-- Password: `admin123`
+### Usuarios
+
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| PATCH | `/api/v1/users/profile` | JWT | Actualizar perfil (nombre, teléfono, fecha de nacimiento) |
+
+### Especialidades
+
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| GET | `/api/v1/specialties` | No | Listar todas las especialidades |
+| GET | `/api/v1/specialties/:id` | No | Detalle de especialidad (incluye médicos) |
+
+### Médicos
+
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| GET | `/api/v1/doctors` | No | Listar médicos (`?search=nombre&specialtyId=uuid`) |
+| GET | `/api/v1/doctors/:id` | No | Detalle de médico |
+| PATCH | `/api/v1/doctors/:id` | JWT (ADMIN) | Actualizar datos de médico |
+
+### Citas médicas
+
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| GET | `/api/v1/appointments` | JWT | Todas las citas del usuario |
+| GET | `/api/v1/appointments/upcoming` | JWT | Próximas citas (PENDING/CONFIRMED) |
+| GET | `/api/v1/appointments/booked-slots?doctorId=&date=` | JWT | Slots ocupados para un médico en una fecha |
+| GET | `/api/v1/appointments/:id` | JWT | Detalle de una cita |
+| POST | `/api/v1/appointments` | JWT | Crear nueva cita |
+| PATCH | `/api/v1/appointments/:id/cancel` | JWT | Cancelar cita |
+| PATCH | `/api/v1/appointments/:id/reschedule` | JWT | Reprogramar cita |
+
+### Historial médico
+
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| GET | `/api/v1/patient-records` | JWT | Historial del paciente autenticado |
+| GET | `/api/v1/patient-records/:id` | JWT | Detalle de un registro clínico |
 
 ---
 
-## API Documentation
+## Formato de respuesta
 
-Swagger UI is available at: `http://localhost:3000/api/docs`
-
-Base URL for all endpoints: `http://localhost:3000/api/v1`
-
----
-
-## API Endpoints
-
-### Auth
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/v1/auth/login` | None | Login with email or DNI |
-| POST | `/api/v1/auth/register` | None | Register new user |
-| POST | `/api/v1/auth/logout` | JWT | Logout (invalidates refresh token) |
-| POST | `/api/v1/auth/refresh` | Refresh JWT | Get new access + refresh tokens |
-| POST | `/api/v1/auth/forgot-password` | None | Request password reset |
-| GET | `/api/v1/auth/me` | JWT | Get current user data |
-
-### Users
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/v1/users/profile` | JWT | Get authenticated user's profile |
-| PATCH | `/api/v1/users/profile` | JWT | Update user profile (name, phone, birthDate) |
-
-### Specialties
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/v1/specialties` | None | List all specialties |
-| GET | `/api/v1/specialties/:id` | None | Get specialty by ID (includes doctors) |
-
-### Doctors
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/v1/doctors` | None | List doctors (optional: ?search=name&specialtyId=uuid) |
-| GET | `/api/v1/doctors/:id` | None | Get doctor by ID |
-| POST | `/api/v1/doctors` | JWT (ADMIN) | Create new doctor |
-| PATCH | `/api/v1/doctors/:id` | JWT (ADMIN) | Update doctor data |
-
-### Appointments
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/v1/appointments` | JWT | List all user's appointments |
-| GET | `/api/v1/appointments/upcoming` | JWT | List upcoming appointments (PENDING/CONFIRMED) |
-| GET | `/api/v1/appointments/booked-slots?doctorId=&date=` | JWT | Get booked time slots for a doctor on a date |
-| GET | `/api/v1/appointments/:id` | JWT | Get appointment by ID (ownership enforced) |
-| POST | `/api/v1/appointments` | JWT | Create new appointment |
-| PATCH | `/api/v1/appointments/:id/cancel` | JWT | Cancel an appointment |
-| PATCH | `/api/v1/appointments/:id/reschedule` | JWT | Reschedule an appointment |
-
-### Patient Records
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/v1/patient-records` | JWT | List all patient records for the user |
-| GET | `/api/v1/patient-records/:id` | JWT | Get patient record by ID (ownership enforced) |
-
----
-
-## Response Format
-
-### Success Response
+### Éxito
 ```json
 {
   "success": true,
-  "data": { ... },
-  "timestamp": "2024-05-15T10:30:00.000Z"
+  "data": { "..." },
+  "timestamp": "2026-04-23T10:30:00.000Z"
 }
 ```
 
-### Error Response
+### Error
 ```json
 {
   "success": false,
   "statusCode": 400,
-  "message": "Error description",
-  "timestamp": "2024-05-15T10:30:00.000Z",
+  "message": "Descripción del error",
+  "timestamp": "2026-04-23T10:30:00.000Z",
   "path": "/api/v1/endpoint"
 }
 ```
 
 ---
 
-## Authentication Flow
+## Flujo de autenticación
 
-1. Call `POST /api/v1/auth/login` with `{ identifier, password }`
-2. Receive `{ accessToken, refreshToken, user }`
-3. Send `Authorization: Bearer <accessToken>` header on protected requests
-4. When access token expires (15 min), call `POST /api/v1/auth/refresh` with the refresh token as the bearer token
-5. Receive new `{ accessToken, refreshToken }` pair (rotation)
-6. Call `POST /api/v1/auth/logout` to invalidate the refresh token
+1. `POST /auth/login` → recibe `{ accessToken, refreshToken, user }`
+2. Enviar `Authorization: Bearer <accessToken>` en cada petición protegida
+3. Al expirar el access token (15 min) → `POST /auth/refresh` con el refresh token como Bearer
+4. Se devuelven nuevos tokens (rotación automática)
+5. `POST /auth/logout` invalida el refresh token en base de datos
 
 ---
 
-## Available Scripts
+## Scripts disponibles
 
 ```bash
-npm run start:dev      # Start in development/watch mode
-npm run build          # Compile TypeScript
-npm run start:prod     # Start compiled app
-npm run db:migrate     # Run pending Prisma migrations
-npm run db:generate    # Generate Prisma client
-npm run db:seed        # Seed the database
-npm run db:studio      # Open Prisma Studio (GUI)
-npm run db:reset       # Reset database and re-run migrations (DESTRUCTIVE)
+npm run start:dev      # Servidor en modo desarrollo (hot reload)
+npm run build          # Compilar TypeScript
+npm run start:prod     # Iniciar versión compilada
+npm run db:migrate     # Ejecutar migraciones pendientes
+npm run db:generate    # Generar cliente Prisma
+npm run db:seed        # Poblar base de datos con datos de prueba
+npm run db:studio      # Abrir Prisma Studio (interfaz visual de BD)
+npm run db:reset       # Reiniciar BD y re-ejecutar migraciones (DESTRUCTIVO)
 ```
 
 ---
 
-## Entity Summary
+## Credenciales de prueba
 
-### User
-`id, dni (unique), email (unique), phone, firstName, lastName, birthDate?, passwordHash, role (USER|ADMIN), createdAt, updatedAt`
-
-### Specialty
-`id, name (unique), description?, icon?, color?`
-
-### Doctor
-`id, firstName, lastName, specialtyId (FK), description?, photoUrl?, rating, yearsExperience, consultationFee, availableDays (int[]), createdAt`
-
-### Appointment
-`id, userId (FK), doctorId (FK), specialtyId (FK), appointmentDate, appointmentTime, status (PENDING|CONFIRMED|CANCELLED|COMPLETED|RESCHEDULED), reason?, notes?, createdAt, updatedAt`
-
-Unique constraint: `(doctorId, appointmentDate, appointmentTime)` prevents double-booking.
-
-### PatientRecord
-`id, userId (FK), appointmentId? (FK unique), diagnosis?, treatment?, notes?, recordDate, doctorName?, specialtyName?, createdAt, updatedAt`
-
-### RefreshToken
-`id, userId (FK cascade delete), tokenHash, expiresAt, createdAt`
+| Rol | Correo | DNI | Contraseña |
+|-----|--------|-----|-----------|
+| Paciente | demo@bellohorizonte.pe | 00000000 | demo123 |
+| Administrador | admin@bellohorizonte.pe | 11111111 | admin123 |
 
 ---
 
-## Notes
+## Contribución
 
-- Email and DNI cannot be changed via profile update endpoints (immutable identifiers).
-- Passwords are hashed with bcrypt (10 salt rounds). They are NOT compatible with SHA-256 hashed passwords from a local Flutter SQLite database.
-- Refresh tokens are rotated on each use (old token is deleted, new one is issued).
-- Double-booking prevention: appointments have a unique constraint on `(doctorId, appointmentDate, appointmentTime)` for non-cancelled statuses.
-- All timestamps are in ISO 8601 format (UTC).
+Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para conocer el flujo de trabajo Scrum, convenciones de ramas y formato de commits.
