@@ -1,0 +1,132 @@
+// Prisma Schema - Clínica Bello Horizonte
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  RESCHEDULED
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  dni          String   @unique
+  email        String   @unique
+  phone        String
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  birthDate    String?  @map("birth_date")
+  passwordHash String   @map("password_hash")
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  refreshTokens  RefreshToken[]
+  appointments   Appointment[]
+  patientRecords PatientRecord[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Specialty {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  icon        String?
+  color       String?
+
+  doctors      Doctor[]
+  appointments Appointment[]
+
+  @@map("specialties")
+}
+
+model Doctor {
+  id              String   @id @default(uuid())
+  firstName       String   @map("first_name")
+  lastName        String   @map("last_name")
+  specialtyId     String   @map("specialty_id")
+  description     String?
+  photoUrl        String?  @map("photo_url")
+  rating          Float    @default(0)
+  yearsExperience Int      @default(0) @map("years_experience")
+  consultationFee Float    @default(0) @map("consultation_fee")
+  availableDays   Int[]    @map("available_days")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  specialty    Specialty     @relation(fields: [specialtyId], references: [id])
+  appointments Appointment[]
+
+  @@map("doctors")
+}
+
+model Appointment {
+  id              String            @id @default(uuid())
+  userId          String            @map("user_id")
+  doctorId        String            @map("doctor_id")
+  specialtyId     String            @map("specialty_id")
+  appointmentDate String            @map("appointment_date")
+  appointmentTime String            @map("appointment_time")
+  status          AppointmentStatus @default(PENDING)
+  reason          String?
+  notes           String?
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  user          User           @relation(fields: [userId], references: [id])
+  doctor        Doctor         @relation(fields: [doctorId], references: [id])
+  specialty     Specialty      @relation(fields: [specialtyId], references: [id])
+  patientRecord PatientRecord?
+
+  @@unique([doctorId, appointmentDate, appointmentTime])
+  @@map("appointments")
+}
+
+model PatientRecord {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  appointmentId String?  @unique @map("appointment_id")
+  diagnosis     String?
+  treatment     String?
+  notes         String?
+  recordDate    String   @map("record_date")
+  doctorName    String?  @map("doctor_name")
+  specialtyName String?  @map("specialty_name")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+
+  @@map("patient_records")
+}
