@@ -6,15 +6,13 @@ const prisma = new PrismaClient();
 const SALT_ROUNDS = 10;
 
 async function main() {
-  console.log('🌱 Starting database seed...');
+  const count = await prisma.specialty.count();
+  if (count > 0) {
+    console.log('✅ Database already seeded, skipping.');
+    return;
+  }
 
-  // ─── Clean existing data ────────────────────────────────────────────────────
-  await prisma.patientRecord.deleteMany();
-  await prisma.appointment.deleteMany();
-  await prisma.refreshToken.deleteMany();
-  await prisma.doctor.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.specialty.deleteMany();
+  console.log('🌱 Starting database seed...');
 
   // ─── Specialties ────────────────────────────────────────────────────────────
   console.log('Creating specialties...');
