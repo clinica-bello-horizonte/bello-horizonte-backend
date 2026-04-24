@@ -1,7 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as admin from 'firebase-admin';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -12,15 +10,13 @@ export class NotificationsService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
 
   onModuleInit() {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!raw) {
+      this.logger.warn('FIREBASE_SERVICE_ACCOUNT not set — push notifications disabled');
+      return;
+    }
     try {
-      const serviceAccountPath = join(
-        process.cwd(),
-        'firebase-service-account.json',
-      );
-      const serviceAccount = JSON.parse(
-        readFileSync(serviceAccountPath, 'utf8'),
-      );
-
+      const serviceAccount = JSON.parse(raw);
       if (!admin.apps.length) {
         this.app = admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
