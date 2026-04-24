@@ -6,13 +6,13 @@ const prisma = new PrismaClient();
 const SALT_ROUNDS = 10;
 
 async function main() {
-  const count = await prisma.specialty.count();
-  if (count > 0) {
-    console.log('✅ Database already seeded, skipping.');
-    return;
-  }
-
   console.log('🌱 Starting database seed...');
+
+  // Borra referencia data en orden seguro (preserva usuarios reales)
+  await prisma.patientRecord.deleteMany();
+  await prisma.appointment.deleteMany();
+  await prisma.doctor.deleteMany();
+  await prisma.specialty.deleteMany();
 
   // ─── Specialties ────────────────────────────────────────────────────────────
   console.log('Creating specialties...');
@@ -87,12 +87,16 @@ async function main() {
   const demoPasswordHash = await bcrypt.hash('demo123', SALT_ROUNDS);
   const adminPasswordHash = await bcrypt.hash('admin123', SALT_ROUNDS);
 
-  const demoUser = await prisma.user.create({
-    data: { dni: '00000000', email: 'demo@bellohorizonte.pe', phone: '987654321', firstName: 'Demo', lastName: 'Usuario', birthDate: '1990-05-15', passwordHash: demoPasswordHash, role: Role.USER },
+  const demoUser = await prisma.user.upsert({
+    where: { email: 'demo@bellohorizonte.pe' },
+    update: {},
+    create: { dni: '00000000', email: 'demo@bellohorizonte.pe', phone: '987654321', firstName: 'Demo', lastName: 'Usuario', birthDate: '1990-05-15', passwordHash: demoPasswordHash, role: Role.USER },
   });
 
-  await prisma.user.create({
-    data: { dni: '11111111', email: 'admin@bellohorizonte.pe', phone: '999888777', firstName: 'Admin', lastName: 'Clínica', birthDate: '1985-03-20', passwordHash: adminPasswordHash, role: Role.ADMIN },
+  await prisma.user.upsert({
+    where: { email: 'admin@bellohorizonte.pe' },
+    update: {},
+    create: { dni: '11111111', email: 'admin@bellohorizonte.pe', phone: '999888777', firstName: 'Admin', lastName: 'Clínica', birthDate: '1985-03-20', passwordHash: adminPasswordHash, role: Role.ADMIN },
   });
 
   console.log(`✅ Created demo user: ${demoUser.email}`);
