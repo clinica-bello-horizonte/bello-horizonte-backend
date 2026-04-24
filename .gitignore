@@ -44,3 +44,6 @@ Thumbs.db
 
 # Misc
 *.local
+
+# Firebase Admin SDK (sensitive private key)
+firebase-service-account.json

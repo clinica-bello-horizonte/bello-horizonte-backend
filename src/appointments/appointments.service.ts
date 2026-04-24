@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { AppointmentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
@@ -32,7 +33,20 @@ const APPOINTMENT_INCLUDE = {
 
 @Injectable()
 export class AppointmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
+
+  private async notifyUser(userId: string, title: string, body: string, data?: Record<string, string>) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { fcmToken: true },
+    });
+    if (user?.fcmToken) {
+      await this.notifications.sendToToken(user.fcmToken, title, body, data);
+    }
+  }
 
   // ─── Find All for User ────────────────────────────────────────────────────────
   async findAllByUser(userId: string) {
@@ -139,6 +153,13 @@ export class AppointmentsService {
       include: APPOINTMENT_INCLUDE,
     });
 
+    this.notifyUser(
+      userId,
+      '¡Cita reservada! 🗓️',
+      `Tu cita con Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName} el ${dto.appointmentDate} a las ${dto.appointmentTime} ha sido registrada.`,
+      { appointmentId: appointment.id, route: '/appointments' },
+    );
+
     return appointment;
   }
 
@@ -172,6 +193,13 @@ export class AppointmentsService {
       data: { status: AppointmentStatus.CANCELLED },
       include: APPOINTMENT_INCLUDE,
     });
+
+    this.notifyUser(
+      userId,
+      'Cita cancelada',
+      `Tu cita del ${updated.appointmentDate} a las ${updated.appointmentTime} ha sido cancelada.`,
+      { appointmentId: id, route: '/appointments' },
+    );
 
     return updated;
   }
@@ -230,6 +258,13 @@ export class AppointmentsService {
       },
       include: APPOINTMENT_INCLUDE,
     });
+
+    this.notifyUser(
+      userId,
+      'Cita reprogramada 🔄',
+      `Tu cita ha sido reprogramada para el ${dto.appointmentDate} a las ${dto.appointmentTime}.`,
+      { appointmentId: id, route: '/appointments' },
+    );
 
     return updated;
   }

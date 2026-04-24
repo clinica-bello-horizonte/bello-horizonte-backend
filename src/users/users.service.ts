@@ -30,6 +30,13 @@ export class UsersService {
     return user;
   }
 
+  async saveFcmToken(userId: string, token: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { fcmToken: token },
+    });
+  }
+
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Patch,
   UseGuards,
 } from '@nestjs/common';
@@ -40,5 +42,16 @@ export class UsersController {
     @Body() dto: UpdateProfileDto,
   ) {
     return this.usersService.updateProfile(userId, dto);
+  }
+
+  @Patch('fcm-token')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Registrar token FCM del dispositivo' })
+  @ApiResponse({ status: 204, description: 'Token guardado' })
+  saveFcmToken(
+    @CurrentUser('id') userId: string,
+    @Body('token') token: string,
+  ) {
+    return this.usersService.saveFcmToken(userId, token);
   }
 }
