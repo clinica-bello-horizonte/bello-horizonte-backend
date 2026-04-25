@@ -13,6 +13,7 @@ datasource db {
 
 enum Role {
   USER
+  DOCTOR
   ADMIN
 }
 
@@ -22,6 +23,7 @@ enum AppointmentStatus {
   CANCELLED
   COMPLETED
   RESCHEDULED
+  POSTPONED
 }
 
 // ─── Models ──────────────────────────────────────────────────────────────────
@@ -37,12 +39,14 @@ model User {
   passwordHash String   @map("password_hash")
   role         Role     @default(USER)
   fcmToken     String?  @map("fcm_token")
+  photoUrl     String?  @map("photo_url")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   refreshTokens  RefreshToken[]
   appointments   Appointment[]
   patientRecords PatientRecord[]
+  doctor         Doctor?
 
   @@map("users")
 }
@@ -74,19 +78,23 @@ model Specialty {
 
 model Doctor {
   id              String   @id @default(uuid())
+  userId          String?  @unique @map("user_id")
   firstName       String   @map("first_name")
   lastName        String   @map("last_name")
   specialtyId     String   @map("specialty_id")
   description     String?
   photoUrl        String?  @map("photo_url")
   rating          Float    @default(0)
+  ratingCount     Int      @default(0) @map("rating_count")
   yearsExperience Int      @default(0) @map("years_experience")
   consultationFee Float    @default(0) @map("consultation_fee")
   availableDays   Int[]    @map("available_days")
   createdAt       DateTime @default(now()) @map("created_at")
 
+  user         User?         @relation(fields: [userId], references: [id])
   specialty    Specialty     @relation(fields: [specialtyId], references: [id])
   appointments Appointment[]
+  ratings      DoctorRating[]
 
   @@map("doctors")
 }
@@ -101,6 +109,10 @@ model Appointment {
   status          AppointmentStatus @default(PENDING)
   reason          String?
   notes           String?
+  cancelReason    String?           @map("cancel_reason")
+  postponeReason  String?           @map("postpone_reason")
+  newDate         String?           @map("new_date")
+  newTime         String?           @map("new_time")
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")
 
@@ -108,9 +120,25 @@ model Appointment {
   doctor        Doctor         @relation(fields: [doctorId], references: [id])
   specialty     Specialty      @relation(fields: [specialtyId], references: [id])
   patientRecord PatientRecord?
+  rating        DoctorRating?
 
   @@unique([doctorId, appointmentDate, appointmentTime])
   @@map("appointments")
+}
+
+model DoctorRating {
+  id            String   @id @default(uuid())
+  appointmentId String   @unique @map("appointment_id")
+  doctorId      String   @map("doctor_id")
+  userId        String   @map("user_id")
+  stars         Int
+  comment       String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  doctor      Doctor      @relation(fields: [doctorId], references: [id])
+
+  @@map("doctor_ratings")
 }
 
 model PatientRecord {

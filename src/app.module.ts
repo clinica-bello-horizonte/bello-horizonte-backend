@@ -8,13 +8,15 @@ import { SpecialtiesModule } from './specialties/specialties.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { PatientRecordsModule } from './patient-records/patient-records.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { DoctorModule } from './doctor/doctor.module';
+import { UploadModule } from './upload/upload.module';
+import { RatingsModule } from './ratings/ratings.module';
+import { AdminAppointmentsController } from './appointments/admin-appointments.controller';
+import { PrismaService } from './prisma/prisma.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env',
-    }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -23,6 +25,11 @@ import { NotificationsModule } from './notifications/notifications.module';
     AppointmentsModule,
     PatientRecordsModule,
     NotificationsModule,
+    DoctorModule,
+    UploadModule,
+    RatingsModule,
   ],
+  controllers: [AdminAppointmentsController],
+  providers: [PrismaService],
 })
 export class AppModule {}

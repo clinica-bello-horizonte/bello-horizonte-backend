@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -164,18 +165,15 @@ export class AppointmentsService {
   }
 
   // ─── Cancel ───────────────────────────────────────────────────────────────────
-  async cancel(userId: string, id: string) {
-    const appointment = await this.prisma.appointment.findUnique({
-      where: { id },
-    });
-
-    if (!appointment) {
-      throw new NotFoundException(`Cita con ID ${id} no encontrada`);
+  async cancel(userId: string, id: string, reason?: string) {
+    if (!reason || reason.trim().length < 5) {
+      throw new BadRequestException('El motivo de cancelación es obligatorio (mínimo 5 caracteres)');
     }
 
-    if (appointment.userId !== userId) {
-      throw new ForbiddenException('No tienes permiso para cancelar esta cita');
-    }
+    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+
+    if (!appointment) throw new NotFoundException(`Cita con ID ${id} no encontrada`);
+    if (appointment.userId !== userId) throw new ForbiddenException('No tienes permiso para cancelar esta cita');
 
     const cancellableStatuses: AppointmentStatus[] = [
       AppointmentStatus.PENDING,
@@ -183,14 +181,19 @@ export class AppointmentsService {
     ];
 
     if (!cancellableStatuses.includes(appointment.status)) {
-      throw new ConflictException(
-        `No se puede cancelar una cita en estado ${appointment.status}`,
-      );
+      throw new ConflictException(`No se puede cancelar una cita en estado ${appointment.status}`);
+    }
+
+    // Política: mínimo 2 horas de anticipación
+    const appointmentDateTime = new Date(`${appointment.appointmentDate}T${appointment.appointmentTime}:00`);
+    const diffHours = (appointmentDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+    if (diffHours < 2) {
+      throw new BadRequestException('No se puede cancelar con menos de 2 horas de anticipación');
     }
 
     const updated = await this.prisma.appointment.update({
       where: { id },
-      data: { status: AppointmentStatus.CANCELLED },
+      data: { status: AppointmentStatus.CANCELLED, cancelReason: reason.trim() },
       include: APPOINTMENT_INCLUDE,
     });
 

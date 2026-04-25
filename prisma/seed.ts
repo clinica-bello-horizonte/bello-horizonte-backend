@@ -8,11 +8,16 @@ const SALT_ROUNDS = 10;
 async function main() {
   console.log('🌱 Starting database seed...');
 
-  // Borra referencia data en orden seguro (preserva usuarios reales)
+  // Borra referencia data en orden seguro
+  await (prisma as any).doctorRating?.deleteMany().catch(() => {});
   await prisma.patientRecord.deleteMany();
   await prisma.appointment.deleteMany();
   await prisma.doctor.deleteMany();
   await prisma.specialty.deleteMany();
+  // Elimina usuarios doctor del seed anterior (no usuarios reales)
+  await prisma.user.deleteMany({
+    where: { email: { endsWith: '.doctor@bellohorizonte.pe' } },
+  });
 
   // ─── Specialties ────────────────────────────────────────────────────────────
   console.log('Creating specialties...');
@@ -73,13 +78,32 @@ async function main() {
     { firstName: 'Jorge Luis', lastName: 'Alva Peña', specialtyName: 'Odontología', description: 'Odontólogo general con especialidad en ortodoncia y estética dental. Implantes dentales y blanqueamiento.', rating: 4.6, yearsExperience: 7, consultationFee: 90.0, availableDays: [1,2,3,4,5,6] },
   ];
 
+  // Crear usuarios doctor y vincularlos
+  const doctorPasswordHash = await bcrypt.hash('doctor123', SALT_ROUNDS);
+
   const doctors = await Promise.all(
-    doctorsData.map(({ specialtyName, ...rest }) =>
-      prisma.doctor.create({ data: { ...rest, specialtyId: sm[specialtyName] } }),
-    ),
+    doctorsData.map(async ({ specialtyName, ...rest }, index) => {
+      const emailKey = `${rest.firstName.toLowerCase().replace(/\s+/g, '.')}.${rest.lastName.toLowerCase().split(' ')[0]}`;
+      const dni = `2000000${String(index).padStart(2, '0')}`;
+      const doctorUser = await prisma.user.create({
+        data: {
+          dni,
+          email: `${emailKey}.doctor@bellohorizonte.pe`,
+          phone: `98700000${String(index).padStart(2, '0')}`,
+          firstName: rest.firstName,
+          lastName: rest.lastName,
+          passwordHash: doctorPasswordHash,
+          role: Role.DOCTOR,
+        },
+      });
+      return prisma.doctor.create({
+        data: { ...rest, specialtyId: sm[specialtyName], userId: doctorUser.id },
+      });
+    }),
   );
 
-  console.log(`✅ Created ${doctors.length} doctors`);
+  console.log(`✅ Created ${doctors.length} doctors with user accounts`);
+  console.log('Doctor login: <nombre>.<apellido>.doctor@bellohorizonte.pe / doctor123');
 
   // ─── Users ───────────────────────────────────────────────────────────────────
   console.log('Creating users...');

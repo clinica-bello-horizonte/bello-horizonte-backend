@@ -84,8 +84,12 @@ export class AppointmentsController {
   @ApiResponse({ status: 403, description: 'No tiene permiso para cancelar esta cita' })
   @ApiResponse({ status: 404, description: 'Cita no encontrada' })
   @ApiResponse({ status: 409, description: 'No se puede cancelar la cita en su estado actual' })
-  cancel(@CurrentUser('id') userId: string, @Param('id') id: string) {
-    return this.appointmentsService.cancel(userId, id);
+  cancel(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body('reason') reason?: string,
+  ) {
+    return this.appointmentsService.cancel(userId, id, reason);
   }
 
   @Patch(':id/reschedule')
