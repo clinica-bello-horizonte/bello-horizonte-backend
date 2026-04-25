@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -29,8 +29,10 @@ export class WaitlistController {
   @Get('check')
   check(
     @CurrentUser('id') userId: string,
-    @Body() body: { doctorId: string; date: string; time: string },
+    @Query('doctorId') doctorId: string,
+    @Query('date') date: string,
+    @Query('time') time: string,
   ) {
-    return this.waitlistService.isOnWaitlist(userId, body.doctorId, body.date, body.time);
+    return this.waitlistService.isOnWaitlist(userId, doctorId, date, time);
   }
 }
