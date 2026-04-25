@@ -60,4 +60,16 @@ export class RatingsService {
   async getAppointmentRating(appointmentId: string) {
     return this.prisma.doctorRating.findUnique({ where: { appointmentId } });
   }
+
+  async getDoctorRatings(doctorId: string) {
+    return this.prisma.doctorRating.findMany({
+      where: { doctorId },
+      select: {
+        id: true, stars: true, comment: true, createdAt: true,
+        appointment: { select: { specialty: { select: { name: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+  }
 }

@@ -43,10 +43,11 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  refreshTokens  RefreshToken[]
-  appointments   Appointment[]
-  patientRecords PatientRecord[]
-  doctor         Doctor?
+  refreshTokens   RefreshToken[]
+  appointments    Appointment[]
+  patientRecords  PatientRecord[]
+  doctor          Doctor?
+  waitlistEntries WaitlistEntry[]
 
   @@map("users")
 }
@@ -91,10 +92,11 @@ model Doctor {
   availableDays   Int[]    @map("available_days")
   createdAt       DateTime @default(now()) @map("created_at")
 
-  user         User?         @relation(fields: [userId], references: [id])
-  specialty    Specialty     @relation(fields: [specialtyId], references: [id])
-  appointments Appointment[]
-  ratings      DoctorRating[]
+  user          User?          @relation(fields: [userId], references: [id])
+  specialty     Specialty      @relation(fields: [specialtyId], references: [id])
+  appointments  Appointment[]
+  ratings       DoctorRating[]
+  waitlistEntries WaitlistEntry[]
 
   @@map("doctors")
 }
@@ -139,6 +141,21 @@ model DoctorRating {
   doctor      Doctor      @relation(fields: [doctorId], references: [id])
 
   @@map("doctor_ratings")
+}
+
+model WaitlistEntry {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  doctorId  String   @map("doctor_id")
+  date      String
+  time      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, doctorId, date, time])
+  @@map("waitlist_entries")
 }
 
 model PatientRecord {

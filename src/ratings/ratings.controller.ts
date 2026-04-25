@@ -23,4 +23,9 @@ export class RatingsController {
   getAppointmentRating(@Param('id') appointmentId: string) {
     return this.ratingsService.getAppointmentRating(appointmentId);
   }
+
+  @Get('doctors/:id')
+  getDoctorRatings(@Param('id') doctorId: string) {
+    return this.ratingsService.getDoctorRatings(doctorId);
+  }
 }

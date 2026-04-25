@@ -12,6 +12,8 @@ import { DoctorModule } from './doctor/doctor.module';
 import { UploadModule } from './upload/upload.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { AdminAppointmentsController } from './appointments/admin-appointments.controller';
+import { AdminStatsController } from './admin/admin-stats.controller';
+import { WaitlistModule } from './waitlist/waitlist.module';
 import { PrismaService } from './prisma/prisma.service';
 
 @Module({
@@ -28,8 +30,9 @@ import { PrismaService } from './prisma/prisma.service';
     DoctorModule,
     UploadModule,
     RatingsModule,
+    WaitlistModule,
   ],
-  controllers: [AdminAppointmentsController],
+  controllers: [AdminAppointmentsController, AdminStatsController],
   providers: [PrismaService],
 })
 export class AppModule {}
