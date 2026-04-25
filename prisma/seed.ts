@@ -6,18 +6,14 @@ const prisma = new PrismaClient();
 const SALT_ROUNDS = 10;
 
 async function main() {
-  console.log('🌱 Starting database seed...');
+  // Solo semilla en el primer arranque (BD vacía)
+  const specialtyCount = await prisma.specialty.count();
+  if (specialtyCount > 0) {
+    console.log('✅ Database already seeded, skipping.');
+    return;
+  }
 
-  // Borra referencia data en orden seguro
-  await (prisma as any).doctorRating?.deleteMany().catch(() => {});
-  await prisma.patientRecord.deleteMany();
-  await prisma.appointment.deleteMany();
-  await prisma.doctor.deleteMany();
-  await prisma.specialty.deleteMany();
-  // Elimina usuarios doctor del seed anterior (no usuarios reales)
-  await prisma.user.deleteMany({
-    where: { email: { endsWith: '.doctor@bellohorizonte.pe' } },
-  });
+  console.log('🌱 Starting database seed (first time)...');
 
   // ─── Specialties ────────────────────────────────────────────────────────────
   console.log('Creating specialties...');
