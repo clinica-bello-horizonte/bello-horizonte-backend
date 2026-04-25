@@ -31,12 +31,12 @@ export class DoctorController {
 
   @Get('profile')
   getMyProfile(@Request() req) {
-    return this.doctorService.getMyProfile(req.user.sub);
+    return this.doctorService.getMyProfile(req.user.id);
   }
 
   @Patch('profile')
   updateMyProfile(@Request() req, @Body() dto: UpdateDoctorProfileDto) {
-    return this.doctorService.updateMyProfile(req.user.sub, dto);
+    return this.doctorService.updateMyProfile(req.user.id, dto);
   }
 
   @Get('agenda')
@@ -45,26 +45,26 @@ export class DoctorController {
     @Query('date') date?: string,
     @Query('status') status?: string,
   ) {
-    return this.doctorService.getMyAgenda(req.user.sub, date, status);
+    return this.doctorService.getMyAgenda(req.user.id, date, status);
   }
 
   @Patch('appointments/:id/confirm')
   confirmAppointment(@Request() req, @Param('id') id: string, @Body() dto: ConfirmAppointmentDto) {
-    return this.doctorService.confirmAppointment(req.user.sub, id, dto);
+    return this.doctorService.confirmAppointment(req.user.id, id, dto);
   }
 
   @Patch('appointments/:id/cancel')
   cancelAppointment(@Request() req, @Param('id') id: string, @Body() dto: CancelAppointmentDoctorDto) {
-    return this.doctorService.cancelAppointment(req.user.sub, id, dto);
+    return this.doctorService.cancelAppointment(req.user.id, id, dto);
   }
 
   @Patch('appointments/:id/postpone')
   postponeAppointment(@Request() req, @Param('id') id: string, @Body() dto: PostponeAppointmentDto) {
-    return this.doctorService.postponeAppointment(req.user.sub, id, dto);
+    return this.doctorService.postponeAppointment(req.user.id, id, dto);
   }
 
   @Patch('appointments/:id/complete')
   completeAppointment(@Request() req, @Param('id') id: string, @Body() dto: CompleteAppointmentDto) {
-    return this.doctorService.completeAppointment(req.user.sub, id, dto);
+    return this.doctorService.completeAppointment(req.user.id, id, dto);
   }
 }

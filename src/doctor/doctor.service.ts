@@ -27,7 +27,10 @@ export class DoctorService {
   async getMyProfile(userId: string) {
     const doctor = await this.prisma.doctor.findUnique({
       where: { userId },
-      include: { specialty: true },
+      include: {
+        specialty: true,
+        user: { select: { phone: true, email: true } },
+      },
     });
     if (!doctor) throw new NotFoundException('Perfil de médico no encontrado');
     return doctor;
