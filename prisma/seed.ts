@@ -5,11 +5,63 @@ const prisma = new PrismaClient();
 
 const SALT_ROUNDS = 10;
 
+async function ensureDoctorAccounts() {
+  // Crea cuentas de usuario para médicos que no tienen una (upgrade de BD existente)
+  const doctorsWithoutUser = await prisma.doctor.findMany({
+    where: { userId: null },
+  });
+
+  if (doctorsWithoutUser.length === 0) return;
+
+  console.log(`⚠️  Found ${doctorsWithoutUser.length} doctors without user accounts. Creating...`);
+  const passwordHash = await bcrypt.hash('doctor123', SALT_ROUNDS);
+
+  for (let i = 0; i < doctorsWithoutUser.length; i++) {
+    const d = doctorsWithoutUser[i];
+    const emailKey = `${d.firstName.toLowerCase().replace(/\s+/g, '.')}.${d.lastName.toLowerCase().split(' ')[0]}`;
+    const email = `${emailKey}.doctor@bellohorizonte.pe`;
+
+    // Evitar duplicados si el user ya existe
+    let user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      const dni = `3000000${String(i).padStart(2, '0')}`;
+      let phone = `99800000${String(i).padStart(2, '0')}`;
+      // Asegurar unicidad de phone
+      const phoneExists = await prisma.user.findFirst({ where: { phone } });
+      if (phoneExists) phone = `99900000${String(i).padStart(2, '0')}`;
+
+      user = await prisma.user.create({
+        data: {
+          dni,
+          email,
+          phone,
+          firstName: d.firstName,
+          lastName: d.lastName,
+          passwordHash: passwordHash,
+          role: Role.DOCTOR,
+        },
+      });
+    }
+
+    await prisma.doctor.update({
+      where: { id: d.id },
+      data: { userId: user.id },
+    });
+
+    console.log(`  ✅ ${d.firstName} ${d.lastName} → ${email}`);
+  }
+
+  console.log(`✅ Doctor accounts created. Password: doctor123`);
+}
+
 async function main() {
-  // Solo semilla en el primer arranque (BD vacía)
+  // Siempre garantizar cuentas para médicos existentes sin usuario
+  await ensureDoctorAccounts();
+
+  // Solo semilla completa en el primer arranque (BD vacía)
   const specialtyCount = await prisma.specialty.count();
   if (specialtyCount > 0) {
-    console.log('✅ Database already seeded, skipping.');
+    console.log('✅ Database already seeded, skipping full seed.');
     return;
   }
 
