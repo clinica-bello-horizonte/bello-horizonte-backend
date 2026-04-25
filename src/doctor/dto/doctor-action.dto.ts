@@ -26,6 +26,20 @@ export class PostponeAppointmentDto {
   newTime: string;
 }
 
+export class CompleteAppointmentDto {
+  @IsOptional()
+  @IsString()
+  diagnosis?: string;
+
+  @IsOptional()
+  @IsString()
+  treatment?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
 export class UpdateDoctorProfileDto {
   @IsOptional()
   @IsString()

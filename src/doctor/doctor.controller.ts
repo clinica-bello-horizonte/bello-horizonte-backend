@@ -15,6 +15,7 @@ import { Roles, Role } from '../common/decorators/roles.decorator';
 import { DoctorService } from './doctor.service';
 import {
   CancelAppointmentDoctorDto,
+  CompleteAppointmentDto,
   ConfirmAppointmentDto,
   PostponeAppointmentDto,
   UpdateDoctorProfileDto,
@@ -63,7 +64,7 @@ export class DoctorController {
   }
 
   @Patch('appointments/:id/complete')
-  completeAppointment(@Request() req, @Param('id') id: string) {
-    return this.doctorService.completeAppointment(req.user.sub, id);
+  completeAppointment(@Request() req, @Param('id') id: string, @Body() dto: CompleteAppointmentDto) {
+    return this.doctorService.completeAppointment(req.user.sub, id, dto);
   }
 }

@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
   CancelAppointmentDoctorDto,
+  CompleteAppointmentDto,
   ConfirmAppointmentDto,
   PostponeAppointmentDto,
   UpdateDoctorProfileDto,
@@ -165,17 +166,38 @@ export class DoctorService {
   }
 
   // ─── Marcar cita como completada ────────────────────────────────────────────
-  async completeAppointment(userId: string, appointmentId: string) {
-    const { appointment } = await this._getAppointmentForDoctor(userId, appointmentId);
+  async completeAppointment(userId: string, appointmentId: string, dto: CompleteAppointmentDto) {
+    const { appointment, doctor } = await this._getAppointmentForDoctor(userId, appointmentId);
 
     if (appointment.status !== 'CONFIRMED') {
       throw new BadRequestException('Solo se pueden completar citas confirmadas');
     }
 
-    return this.prisma.appointment.update({
+    const updated = await this.prisma.appointment.update({
       where: { id: appointmentId },
       data: { status: 'COMPLETED' },
     });
+
+    // Crear registro en historial médico del paciente
+    const specialty = await this.prisma.specialty.findUnique({
+      where: { id: appointment.specialtyId },
+      select: { name: true },
+    });
+
+    await this.prisma.patientRecord.create({
+      data: {
+        userId: appointment.userId,
+        appointmentId: appointment.id,
+        diagnosis: dto.diagnosis ?? null,
+        treatment: dto.treatment ?? null,
+        notes: dto.notes ?? null,
+        recordDate: appointment.appointmentDate,
+        doctorName: `Dr. ${doctor.firstName} ${doctor.lastName}`,
+        specialtyName: specialty?.name ?? null,
+      },
+    });
+
+    return updated;
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
