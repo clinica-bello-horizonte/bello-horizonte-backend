@@ -1,4 +1,4 @@
-CREATE TABLE "waitlist_entries" (
+CREATE TABLE IF NOT EXISTS "waitlist_entries" (
   "id"         TEXT NOT NULL,
   "user_id"    TEXT NOT NULL,
   "doctor_id"  TEXT NOT NULL,
