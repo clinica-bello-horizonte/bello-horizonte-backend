@@ -7,6 +7,7 @@ import {
   Patch,
   UseGuards,
 } from '@nestjs/common';
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -54,4 +55,25 @@ export class UsersController {
   ) {
     return this.usersService.saveFcmToken(userId, token);
   }
+
+  @Patch('change-password')
+  @ApiOperation({ summary: 'Cambiar contraseña del usuario autenticado' })
+  @ApiResponse({ status: 200, description: 'Contraseña actualizada' })
+  @ApiResponse({ status: 400, description: 'Contraseña actual incorrecta' })
+  changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.usersService.changePassword(userId, dto.currentPassword, dto.newPassword);
+  }
+}
+
+class ChangePasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  currentPassword: string;
+
+  @IsString()
+  @MinLength(6)
+  newPassword: string;
 }

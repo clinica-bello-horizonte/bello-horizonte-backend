@@ -204,7 +204,38 @@ export class AppointmentsService {
       { appointmentId: id, route: '/appointments' },
     );
 
+    // Notificar al primero en la lista de espera para ese slot
+    this.notifyWaitlistOnCancellation(
+      updated.doctorId,
+      updated.appointmentDate,
+      updated.appointmentTime,
+    );
+
     return updated;
+  }
+
+  private async notifyWaitlistOnCancellation(doctorId: string, date: string, time: string) {
+    try {
+      const entries = await this.prisma.waitlistEntry.findMany({
+        where: { doctorId, date, time },
+        include: {
+          user: { select: { id: true, fcmToken: true, firstName: true } },
+          doctor: { select: { firstName: true, lastName: true } },
+        },
+        orderBy: { createdAt: 'asc' },
+        take: 1,
+      });
+      if (entries.length === 0) return;
+      const entry = entries[0];
+      if (entry.user.fcmToken) {
+        await this.notifications.sendToToken(
+          entry.user.fcmToken,
+          '¡Slot disponible!',
+          `${entry.user.firstName}, se liberó el horario ${time} del ${date} con Dr. ${entry.doctor.firstName} ${entry.doctor.lastName}. ¡Reserva ahora!`,
+          { route: '/appointments/create', doctorId },
+        );
+      }
+    } catch (_) {}
   }
 
   // ─── Reschedule ───────────────────────────────────────────────────────────────
