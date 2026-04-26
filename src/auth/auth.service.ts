@@ -230,6 +230,7 @@ export class AuthService {
         lastName: true,
         birthDate: true,
         role: true,
+        photoUrl: true,
         createdAt: true,
         updatedAt: true,
       },
