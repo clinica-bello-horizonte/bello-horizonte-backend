@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
+  IsEmail,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -9,25 +10,41 @@ import {
   IsUUID,
   Max,
   Min,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateDoctorDto {
-  @ApiProperty({
-    description: 'Nombres del médico',
-    example: 'Carlos',
-  })
+  @ApiProperty({ description: 'Nombres del médico', example: 'Carlos' })
   @IsString()
   @IsNotEmpty({ message: 'El nombre es requerido' })
   firstName: string;
 
-  @ApiProperty({
-    description: 'Apellidos del médico',
-    example: 'Mendoza Ríos',
-  })
+  @ApiProperty({ description: 'Apellidos del médico', example: 'Mendoza Ríos' })
   @IsString()
   @IsNotEmpty({ message: 'Los apellidos son requeridos' })
   lastName: string;
+
+  @ApiProperty({ description: 'DNI del médico', example: '45678901' })
+  @IsString()
+  @IsNotEmpty({ message: 'El DNI es requerido' })
+  dni: string;
+
+  @ApiProperty({ description: 'Correo electrónico', example: 'dr.carlos@bellohorizonte.pe' })
+  @IsEmail({}, { message: 'Correo inválido' })
+  @IsNotEmpty({ message: 'El correo es requerido' })
+  email: string;
+
+  @ApiProperty({ description: 'Teléfono', example: '987654321' })
+  @IsString()
+  @IsNotEmpty({ message: 'El teléfono es requerido' })
+  phone: string;
+
+  @ApiPropertyOptional({ description: 'Contraseña inicial (mín. 6 caracteres)', example: 'doctor123' })
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  password?: string;
 
   @ApiProperty({
     description: 'ID de la especialidad',

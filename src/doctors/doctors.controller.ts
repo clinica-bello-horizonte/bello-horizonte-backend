@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -71,5 +74,17 @@ export class DoctorsController {
   @ApiResponse({ status: 404, description: 'Médico no encontrado' })
   update(@Param('id') id: string, @Body() dto: UpdateDoctorDto) {
     return this.doctorsService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('access-token')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '[ADMIN] Eliminar médico y su cuenta de usuario' })
+  @ApiResponse({ status: 200, description: 'Médico eliminado' })
+  @ApiResponse({ status: 404, description: 'Médico no encontrado' })
+  delete(@Param('id') id: string) {
+    return this.doctorsService.delete(id);
   }
 }
