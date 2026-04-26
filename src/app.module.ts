@@ -14,7 +14,6 @@ import { RatingsModule } from './ratings/ratings.module';
 import { AdminAppointmentsController } from './appointments/admin-appointments.controller';
 import { AdminStatsController } from './admin/admin-stats.controller';
 import { WaitlistModule } from './waitlist/waitlist.module';
-import { PrismaService } from './prisma/prisma.service';
 
 @Module({
   imports: [
@@ -33,6 +32,5 @@ import { PrismaService } from './prisma/prisma.service';
     WaitlistModule,
   ],
   controllers: [AdminAppointmentsController, AdminStatsController],
-  providers: [PrismaService],
 })
 export class AppModule {}
