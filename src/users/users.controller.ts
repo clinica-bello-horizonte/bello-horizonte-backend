@@ -7,7 +7,6 @@ import {
   Patch,
   UseGuards,
 } from '@nestjs/common';
-import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -16,6 +15,7 @@ import {
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -66,14 +66,4 @@ export class UsersController {
   ) {
     return this.usersService.changePassword(userId, dto.currentPassword, dto.newPassword);
   }
-}
-
-class ChangePasswordDto {
-  @IsString()
-  @IsNotEmpty()
-  currentPassword: string;
-
-  @IsString()
-  @MinLength(6)
-  newPassword: string;
 }
