@@ -48,6 +48,7 @@ model User {
   patientRecords  PatientRecord[]
   doctor          Doctor?
   waitlistEntries WaitlistEntry[]
+  passwordResets  PasswordReset[]
 
   @@map("users")
 }
@@ -175,4 +176,17 @@ model PatientRecord {
   appointment Appointment? @relation(fields: [appointmentId], references: [id])
 
   @@map("patient_records")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  code      String
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_resets")
 }

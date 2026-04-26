@@ -8,6 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -18,6 +19,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -164,27 +166,55 @@ export class AuthService {
     const { identifier } = dto;
 
     const user = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ email: identifier.toLowerCase() }, { dni: identifier }],
-      },
+      where: { OR: [{ email: identifier.toLowerCase() }, { dni: identifier }] },
     });
 
     // Always return success to prevent user enumeration
-    if (!user) {
-      return {
-        message:
-          'Si el usuario existe, recibirá instrucciones para restablecer su contraseña',
-      };
-    }
+    if (!user) return { message: 'Si el usuario existe, recibirá el código por correo.' };
 
-    // In a real app, send email with reset link
-    // For now, we just return a success message
-    return {
-      message:
-        'Si el usuario existe, recibirá instrucciones para restablecer su contraseña',
-      // In development, you could return additional info:
-      // email: user.email (only in dev mode)
-    };
+    // Invalidar códigos anteriores
+    await this.prisma.passwordReset.updateMany({
+      where: { userId: user.id, used: false },
+      data: { used: true },
+    });
+
+    // Generar código de 6 dígitos
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+
+    await this.prisma.passwordReset.create({
+      data: { userId: user.id, code, expiresAt },
+    });
+
+    await this.emailService.sendPasswordReset(user.email, user.firstName, code);
+
+    return { message: 'Se envió el código de verificación a tu correo.' };
+  }
+
+  // ─── Reset Password ───────────────────────────────────────────────────────────
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { email: email.toLowerCase() },
+    });
+    if (!user) throw new BadRequestException('Usuario no encontrado');
+
+    const reset = await this.prisma.passwordReset.findFirst({
+      where: { userId: user.id, code, used: false },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!reset) throw new BadRequestException('Código inválido');
+    if (reset.expiresAt < new Date()) throw new BadRequestException('El código ha expirado');
+    if (newPassword.length < 6) throw new BadRequestException('La contraseña debe tener al menos 6 caracteres');
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await Promise.all([
+      this.prisma.user.update({ where: { id: user.id }, data: { passwordHash } }),
+      this.prisma.passwordReset.update({ where: { id: reset.id }, data: { used: true } }),
+    ]);
+
+    return { message: 'Contraseña restablecida exitosamente' };
   }
 
   // ─── Get Me ──────────────────────────────────────────────────────────────────

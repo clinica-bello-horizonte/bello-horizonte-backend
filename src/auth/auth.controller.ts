@@ -79,6 +79,15 @@ export class AuthController {
     return this.authService.forgotPassword(dto);
   }
 
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Restablecer contraseña con código de verificación' })
+  @ApiResponse({ status: 200, description: 'Contraseña restablecida' })
+  @ApiResponse({ status: 400, description: 'Código inválido o expirado' })
+  resetPassword(@Body() body: { email: string; code: string; newPassword: string }) {
+    return this.authService.resetPassword(body.email, body.code, body.newPassword);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
