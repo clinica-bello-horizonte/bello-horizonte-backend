@@ -146,7 +146,8 @@ export class AppointmentsService {
     }
 
     // Check if slot is already booked in Supabase (SYSTEMATIC/WhatsApp)
-    const doctorName = `${doctor.firstName} ${doctor.lastName}`;
+    // SYSTEMATIC guarda solo primer apellido: "Daniel Valera" no "Daniel Valera Arrunátegui"
+    const doctorName = `${doctor.firstName} ${doctor.lastName.split(' ')[0]}`;
     const dateSpanish = this.supabaseService.formatDateSpanish(dto.appointmentDate);
     const supabaseSlots = await this.supabaseService.getBookedTimesFromSupabase(doctorName, dateSpanish);
     if (supabaseSlots.includes(dto.appointmentTime)) {
@@ -184,7 +185,7 @@ export class AppointmentsService {
       if (!user) return;
       this.supabaseService.writeAppointmentToSupabase({
         bellohorizonteId: appointment.id,
-        doctorName: `${doctor.firstName} ${doctor.lastName}`,
+        doctorName: `${doctor.firstName} ${doctor.lastName.split(' ')[0]}`,
         patientName: `${user.firstName} ${user.lastName}`,
         patientDni: user.dni,
         contactPhone: user.phone,
@@ -362,7 +363,7 @@ export class AppointmentsService {
     const localSlots = appointments.map((a) => a.appointmentTime);
 
     // Consultar también los slots ocupados en Supabase (citas por WhatsApp de SYSTEMATIC)
-    const doctorName = `${doctor.firstName} ${doctor.lastName}`;
+    const doctorName = `${doctor.firstName} ${doctor.lastName.split(' ')[0]}`;
     const dateSpanish = this.supabaseService.formatDateSpanish(date);
     const supabaseSlots = await this.supabaseService.getBookedTimesFromSupabase(doctorName, dateSpanish);
 
