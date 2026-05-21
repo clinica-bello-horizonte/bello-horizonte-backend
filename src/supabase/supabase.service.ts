@@ -71,7 +71,7 @@ export class SupabaseService {
         .select('appointment_time')
         .ilike('doctor_name', doctorName)
         .eq('appointment_date', dateSpanish)
-        .neq('source', 'bello_horizonte');
+        .or('source.neq.bello_horizonte,source.is.null');
 
       if (error) {
         this.logger.error('Error consultando slots en Supabase', error.message);
