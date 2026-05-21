@@ -14,6 +14,7 @@ import { RatingsModule } from './ratings/ratings.module';
 import { AdminAppointmentsController } from './appointments/admin-appointments.controller';
 import { AdminStatsController } from './admin/admin-stats.controller';
 import { WaitlistModule } from './waitlist/waitlist.module';
+import { SupabaseModule } from './supabase/supabase.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { WaitlistModule } from './waitlist/waitlist.module';
     UploadModule,
     RatingsModule,
     WaitlistModule,
+    SupabaseModule,
   ],
   controllers: [AdminAppointmentsController, AdminStatsController],
 })

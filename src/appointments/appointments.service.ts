@@ -3,11 +3,13 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { AppointmentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SupabaseService } from '../supabase/supabase.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
@@ -34,9 +36,12 @@ const APPOINTMENT_INCLUDE = {
 
 @Injectable()
 export class AppointmentsService {
+  private readonly logger = new Logger(AppointmentsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly supabaseService: SupabaseService,
   ) {}
 
   private async notifyUser(userId: string, title: string, body: string, data?: Record<string, string>) {
@@ -122,7 +127,7 @@ export class AppointmentsService {
       throw new NotFoundException(`Especialidad con ID ${dto.specialtyId} no encontrada`);
     }
 
-    // Check if slot is already booked
+    // Check if slot is already booked (local DB)
     const existingAppointment = await this.prisma.appointment.findFirst({
       where: {
         doctorId: dto.doctorId,
@@ -135,6 +140,16 @@ export class AppointmentsService {
     });
 
     if (existingAppointment) {
+      throw new ConflictException(
+        `El horario ${dto.appointmentTime} del ${dto.appointmentDate} ya está reservado con este médico`,
+      );
+    }
+
+    // Check if slot is already booked in Supabase (SYSTEMATIC/WhatsApp)
+    const doctorName = `${doctor.firstName} ${doctor.lastName}`;
+    const dateSpanish = this.supabaseService.formatDateSpanish(dto.appointmentDate);
+    const supabaseSlots = await this.supabaseService.getBookedTimesFromSupabase(doctorName, dateSpanish);
+    if (supabaseSlots.includes(dto.appointmentTime)) {
       throw new ConflictException(
         `El horario ${dto.appointmentTime} del ${dto.appointmentDate} ya está reservado con este médico`,
       );
@@ -160,6 +175,24 @@ export class AppointmentsService {
       `Tu cita con Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName} el ${dto.appointmentDate} a las ${dto.appointmentTime} ha sido registrada.`,
       { appointmentId: appointment.id, route: '/appointments' },
     );
+
+    // Escribir en Supabase (fire-and-forget, no bloquea la respuesta)
+    this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { firstName: true, lastName: true, dni: true, phone: true },
+    }).then((user) => {
+      if (!user) return;
+      this.supabaseService.writeAppointmentToSupabase({
+        bellohorizonteId: appointment.id,
+        doctorName: `${doctor.firstName} ${doctor.lastName}`,
+        patientName: `${user.firstName} ${user.lastName}`,
+        patientDni: user.dni,
+        contactPhone: user.phone,
+        appointmentDate: dto.appointmentDate,
+        appointmentTime: dto.appointmentTime,
+        reason: specialty.name,
+      });
+    }).catch((e) => this.logger.error('Error sincronizando cita con Supabase', e));
 
     return appointment;
   }
@@ -210,6 +243,10 @@ export class AppointmentsService {
       updated.appointmentDate,
       updated.appointmentTime,
     );
+
+    // Eliminar de Supabase (fire-and-forget)
+    this.supabaseService.deleteAppointmentFromSupabase(id)
+      .catch((e) => this.logger.error('Error eliminando cita de Supabase', e));
 
     return updated;
   }
@@ -305,7 +342,6 @@ export class AppointmentsService {
 
   // ─── Get Booked Slots ─────────────────────────────────────────────────────────
   async getBookedSlots(doctorId: string, date: string): Promise<string[]> {
-    // Verify doctor exists
     const doctor = await this.prisma.doctor.findUnique({
       where: { id: doctorId },
     });
@@ -318,15 +354,18 @@ export class AppointmentsService {
       where: {
         doctorId,
         appointmentDate: date,
-        status: {
-          notIn: [AppointmentStatus.CANCELLED],
-        },
+        status: { notIn: [AppointmentStatus.CANCELLED] },
       },
-      select: {
-        appointmentTime: true,
-      },
+      select: { appointmentTime: true },
     });
 
-    return appointments.map((a) => a.appointmentTime);
+    const localSlots = appointments.map((a) => a.appointmentTime);
+
+    // Consultar también los slots ocupados en Supabase (citas por WhatsApp de SYSTEMATIC)
+    const doctorName = `${doctor.firstName} ${doctor.lastName}`;
+    const dateSpanish = this.supabaseService.formatDateSpanish(date);
+    const supabaseSlots = await this.supabaseService.getBookedTimesFromSupabase(doctorName, dateSpanish);
+
+    return [...new Set([...localSlots, ...supabaseSlots])];
   }
 }
