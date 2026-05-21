@@ -70,8 +70,7 @@ export class SupabaseService {
         .from('appointments')
         .select('appointment_time')
         .ilike('doctor_name', doctorName)
-        .eq('appointment_date', dateSpanish)
-        .or('source.neq.bello_horizonte,source.is.null');
+        .eq('appointment_date', dateSpanish);
 
       if (error) {
         this.logger.error('Error consultando slots en Supabase', error.message);
