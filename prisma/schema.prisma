@@ -49,6 +49,8 @@ model User {
   doctor          Doctor?
   waitlistEntries WaitlistEntry[]
   passwordResets  PasswordReset[]
+  healthProfile   HealthProfile?
+  dependents      Dependent[]
 
   @@map("users")
 }
@@ -116,6 +118,8 @@ model Appointment {
   postponeReason  String?           @map("postpone_reason")
   newDate         String?           @map("new_date")
   newTime         String?           @map("new_time")
+  attendanceConfirmed Boolean       @default(false) @map("attendance_confirmed")
+  patientName     String?           @map("patient_name")
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")
 
@@ -189,4 +193,39 @@ model PasswordReset {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("password_resets")
+}
+
+model HealthProfile {
+  id                       String   @id @default(uuid())
+  userId                   String   @unique @map("user_id")
+  bloodType                String?  @map("blood_type")
+  allergies                String?
+  chronicConditions        String?  @map("chronic_conditions")
+  medications              String?
+  emergencyContactName     String?  @map("emergency_contact_name")
+  emergencyContactPhone    String?  @map("emergency_contact_phone")
+  emergencyContactRelation String?  @map("emergency_contact_relation")
+  notes                    String?
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("health_profiles")
+}
+
+model Dependent {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  dni       String?
+  birthDate String?  @map("birth_date")
+  relation  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("dependents")
 }

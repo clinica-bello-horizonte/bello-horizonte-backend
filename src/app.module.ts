@@ -15,6 +15,8 @@ import { AdminAppointmentsController } from './appointments/admin-appointments.c
 import { AdminStatsController } from './admin/admin-stats.controller';
 import { WaitlistModule } from './waitlist/waitlist.module';
 import { SupabaseModule } from './supabase/supabase.module';
+import { HealthProfileModule } from './health-profile/health-profile.module';
+import { DependentsModule } from './dependents/dependents.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { SupabaseModule } from './supabase/supabase.module';
     RatingsModule,
     WaitlistModule,
     SupabaseModule,
+    HealthProfileModule,
+    DependentsModule,
   ],
   controllers: [AdminAppointmentsController, AdminStatsController],
 })

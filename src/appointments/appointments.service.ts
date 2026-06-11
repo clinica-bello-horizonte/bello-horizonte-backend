@@ -341,6 +341,20 @@ export class AppointmentsService {
     return updated;
   }
 
+  // ─── Confirm Attendance ───────────────────────────────────────────────────────
+  async confirmAttendance(userId: string, id: string) {
+    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+    if (!appointment) throw new NotFoundException(`Cita con ID ${id} no encontrada`);
+    if (appointment.userId !== userId) {
+      throw new ForbiddenException('No tienes permiso sobre esta cita');
+    }
+    return this.prisma.appointment.update({
+      where: { id },
+      data: { attendanceConfirmed: true },
+      include: APPOINTMENT_INCLUDE,
+    });
+  }
+
   // ─── Get Booked Slots ─────────────────────────────────────────────────────────
   async getBookedSlots(doctorId: string, date: string): Promise<string[]> {
     const doctor = await this.prisma.doctor.findUnique({

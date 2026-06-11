@@ -105,4 +105,16 @@ export class AppointmentsController {
   ) {
     return this.appointmentsService.reschedule(userId, id, dto);
   }
+
+  @Patch(':id/confirm-attendance')
+  @ApiOperation({ summary: 'El paciente confirma que asistirá a la cita' })
+  @ApiResponse({ status: 200, description: 'Asistencia confirmada' })
+  @ApiResponse({ status: 403, description: 'No tiene permiso sobre esta cita' })
+  @ApiResponse({ status: 404, description: 'Cita no encontrada' })
+  confirmAttendance(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.appointmentsService.confirmAttendance(userId, id);
+  }
 }
