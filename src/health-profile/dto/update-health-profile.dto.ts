@@ -38,6 +38,11 @@ export class UpdateHealthProfileDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(80)
+  insurance?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(1000)
   notes?: string;
 }

@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDependentDto, UpdateDependentDto } from './dto/dependent.dto';
 
@@ -13,15 +18,29 @@ export class DependentsService {
     });
   }
 
-  create(userId: string, dto: CreateDependentDto) {
-    return this.prisma.dependent.create({
-      data: { userId, ...dto },
-    });
+  async create(userId: string, dto: CreateDependentDto) {
+    try {
+      return await this.prisma.dependent.create({
+        data: { userId, ...dto },
+      });
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new ConflictException('Ya tienes un familiar con ese DNI');
+      }
+      throw e;
+    }
   }
 
   async update(userId: string, id: string, dto: UpdateDependentDto) {
     await this.ensureOwner(userId, id);
-    return this.prisma.dependent.update({ where: { id }, data: { ...dto } });
+    try {
+      return await this.prisma.dependent.update({ where: { id }, data: { ...dto } });
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new ConflictException('Ya tienes un familiar con ese DNI');
+      }
+      throw e;
+    }
   }
 
   async remove(userId: string, id: string) {

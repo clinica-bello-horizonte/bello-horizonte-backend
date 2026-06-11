@@ -166,6 +166,9 @@ export class AppointmentsService {
         status: AppointmentStatus.PENDING,
         reason: dto.reason,
         notes: dto.notes || null,
+        patientName: dto.patientName || null,
+        patientDni: dto.patientDni || null,
+        insurance: dto.insurance || null,
       },
       include: APPOINTMENT_INCLUDE,
     });

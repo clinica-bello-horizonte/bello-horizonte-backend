@@ -62,4 +62,19 @@ export class CreateAppointmentDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Nombre del paciente (si la cita es para un familiar)' })
+  @IsOptional()
+  @IsString()
+  patientName?: string;
+
+  @ApiPropertyOptional({ description: 'DNI del paciente' })
+  @IsOptional()
+  @IsString()
+  patientDni?: string;
+
+  @ApiPropertyOptional({ description: 'Seguro del paciente' })
+  @IsOptional()
+  @IsString()
+  insurance?: string;
 }

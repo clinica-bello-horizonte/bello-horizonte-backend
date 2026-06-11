@@ -17,10 +17,10 @@ export class CreateDependentDto {
   @MaxLength(80)
   lastName: string;
 
-  @IsOptional()
   @IsString()
+  @IsNotEmpty()
   @Length(8, 8)
-  dni?: string;
+  dni: string;
 
   @IsOptional()
   @IsString()
@@ -30,6 +30,11 @@ export class CreateDependentDto {
   @IsNotEmpty()
   @MaxLength(40)
   relation: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  insurance?: string;
 }
 
 export class UpdateDependentDto {
@@ -56,4 +61,9 @@ export class UpdateDependentDto {
   @IsString()
   @MaxLength(40)
   relation?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  insurance?: string;
 }

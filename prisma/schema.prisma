@@ -120,6 +120,8 @@ model Appointment {
   newTime         String?           @map("new_time")
   attendanceConfirmed Boolean       @default(false) @map("attendance_confirmed")
   patientName     String?           @map("patient_name")
+  patientDni      String?           @map("patient_dni")
+  insurance       String?
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")
 
@@ -205,6 +207,7 @@ model HealthProfile {
   emergencyContactName     String?  @map("emergency_contact_name")
   emergencyContactPhone    String?  @map("emergency_contact_phone")
   emergencyContactRelation String?  @map("emergency_contact_relation")
+  insurance                String?
   notes                    String?
   createdAt                DateTime @default(now()) @map("created_at")
   updatedAt                DateTime @updatedAt @map("updated_at")
@@ -222,10 +225,12 @@ model Dependent {
   dni       String?
   birthDate String?  @map("birth_date")
   relation  String
+  insurance String?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, dni])
   @@map("dependents")
 }
