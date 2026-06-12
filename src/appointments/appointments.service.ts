@@ -368,22 +368,24 @@ export class AppointmentsService {
       throw new NotFoundException(`Médico con ID ${doctorId} no encontrado`);
     }
 
-    const appointments = await this.prisma.appointment.findMany({
-      where: {
-        doctorId,
-        appointmentDate: date,
-        status: { notIn: [AppointmentStatus.CANCELLED] },
-      },
-      select: { appointmentTime: true },
-    });
-
-    const localSlots = appointments.map((a) => a.appointmentTime);
-
-    // Consultar también los slots ocupados en Supabase (citas por WhatsApp de SYSTEMATIC)
+    // Consulta local (PostgreSQL) y Supabase (citas por WhatsApp de SYSTEMATIC)
+    // en PARALELO para reducir casi a la mitad el tiempo de carga de horarios.
     const doctorName = `${doctor.firstName} ${doctor.lastName.split(' ')[0]}`;
     const dateSpanish = this.supabaseService.formatDateSpanish(date);
-    const supabaseSlots = await this.supabaseService.getBookedTimesFromSupabase(doctorName, dateSpanish);
 
+    const [appointments, supabaseSlots] = await Promise.all([
+      this.prisma.appointment.findMany({
+        where: {
+          doctorId,
+          appointmentDate: date,
+          status: { notIn: [AppointmentStatus.CANCELLED] },
+        },
+        select: { appointmentTime: true },
+      }),
+      this.supabaseService.getBookedTimesFromSupabase(doctorName, dateSpanish),
+    ]);
+
+    const localSlots = appointments.map((a) => a.appointmentTime);
     return [...new Set([...localSlots, ...supabaseSlots])];
   }
 }
