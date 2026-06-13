@@ -17,6 +17,7 @@ import { WaitlistModule } from './waitlist/waitlist.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { HealthProfileModule } from './health-profile/health-profile.module';
 import { DependentsModule } from './dependents/dependents.module';
+import { CampaignsModule } from './campaigns/campaigns.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { DependentsModule } from './dependents/dependents.module';
     SupabaseModule,
     HealthProfileModule,
     DependentsModule,
+    CampaignsModule,
   ],
   controllers: [AdminAppointmentsController, AdminStatsController],
 })

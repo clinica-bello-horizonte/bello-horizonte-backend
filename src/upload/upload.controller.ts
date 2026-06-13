@@ -7,7 +7,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { UploadService } from './upload.service';
@@ -43,5 +43,14 @@ export class UploadController {
     }
 
     return { photoUrl: url };
+  }
+
+  @Post('image')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Subir una imagen genérica (ej. campañas) y obtener su URL' })
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  async uploadImage(@UploadedFile() file: Express.Multer.File) {
+    const url = await this.uploadService.uploadImage(file, 'bello-horizonte/campaigns');
+    return { url };
   }
 }

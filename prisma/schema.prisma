@@ -217,6 +217,22 @@ model HealthProfile {
   @@map("health_profiles")
 }
 
+model Campaign {
+  id        String   @id @default(uuid())
+  title     String
+  subtitle  String?
+  imageUrl  String?  @map("image_url")
+  ctaLabel  String?  @map("cta_label")
+  ctaRoute  String?  @map("cta_route")
+  colorHex  String?  @map("color_hex")
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("campaigns")
+}
+
 model Dependent {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
