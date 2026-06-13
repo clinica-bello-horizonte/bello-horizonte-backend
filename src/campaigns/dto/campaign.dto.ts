@@ -15,7 +15,7 @@ export class CreateCampaignDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(240)
+  @MaxLength(5000)
   subtitle?: string;
 
   @IsOptional()
@@ -59,7 +59,7 @@ export class UpdateCampaignDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(240)
+  @MaxLength(5000)
   subtitle?: string;
 
   @IsOptional()
