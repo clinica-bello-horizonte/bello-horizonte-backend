@@ -225,6 +225,7 @@ model Campaign {
   ctaLabel  String?  @map("cta_label")
   ctaRoute  String?  @map("cta_route")
   colorHex  String?  @map("color_hex")
+  imageFocus String? @map("image_focus")
   active    Boolean  @default(true)
   order     Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at")

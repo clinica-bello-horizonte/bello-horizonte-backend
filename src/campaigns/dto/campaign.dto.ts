@@ -38,6 +38,11 @@ export class CreateCampaignDto {
   colorHex?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  imageFocus?: string;
+
+  @IsOptional()
   @IsBoolean()
   active?: boolean;
 
@@ -75,6 +80,11 @@ export class UpdateCampaignDto {
   @IsString()
   @MaxLength(20)
   colorHex?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  imageFocus?: string;
 
   @IsOptional()
   @IsBoolean()
