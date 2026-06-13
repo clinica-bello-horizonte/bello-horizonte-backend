@@ -50,7 +50,13 @@ export class UploadController {
   @ApiOperation({ summary: 'Subir una imagen genérica (ej. campañas) y obtener su URL' })
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
   async uploadImage(@UploadedFile() file: Express.Multer.File) {
-    const url = await this.uploadService.uploadImage(file, 'bello-horizonte/campaigns');
+    // 'limit': solo reduce si supera 1200px de ancho; conserva la proporción
+    // (no recorta a cuadrado como los avatares).
+    const url = await this.uploadService.uploadImage(
+      file,
+      'bello-horizonte/campaigns',
+      [{ width: 1200, crop: 'limit' }],
+    );
     return { url };
   }
 }

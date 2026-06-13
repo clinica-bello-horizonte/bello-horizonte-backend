@@ -11,7 +11,19 @@ export class UploadService {
     });
   }
 
-  async uploadImage(file: Express.Multer.File, folder: string): Promise<string> {
+  /**
+   * Sube una imagen a Cloudinary.
+   * @param transformation Transformación de Cloudinary. Por defecto recorta a
+   * 400x400 (avatares). Para imágenes que deben conservar su proporción
+   * (ej. campañas) pasar un 'limit' que solo reduce el tamaño máximo.
+   */
+  async uploadImage(
+    file: Express.Multer.File,
+    folder: string,
+    transformation: Record<string, unknown>[] = [
+      { width: 400, height: 400, crop: 'fill' },
+    ],
+  ): Promise<string> {
     if (!file) throw new BadRequestException('No se proporcionó ningún archivo');
 
     const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -25,7 +37,7 @@ export class UploadService {
 
     return new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
-        { folder, resource_type: 'image', transformation: [{ width: 400, height: 400, crop: 'fill' }] },
+        { folder, resource_type: 'image', transformation },
         (error, result) => {
           if (error) reject(new BadRequestException('Error al subir la imagen'));
           else resolve(result!.secure_url);
