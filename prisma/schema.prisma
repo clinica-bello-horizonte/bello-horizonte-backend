@@ -121,6 +121,7 @@ model Appointment {
   attendanceConfirmed Boolean       @default(false) @map("attendance_confirmed")
   patientName     String?           @map("patient_name")
   patientDni      String?           @map("patient_dni")
+  patientBirthDate String?          @map("patient_birth_date")
   insurance       String?
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")

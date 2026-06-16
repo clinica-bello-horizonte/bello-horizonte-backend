@@ -73,6 +73,11 @@ export class CreateAppointmentDto {
   @IsString()
   patientDni?: string;
 
+  @ApiPropertyOptional({ description: 'Fecha de nacimiento del paciente (YYYY-MM-DD)' })
+  @IsOptional()
+  @IsString()
+  patientBirthDate?: string;
+
   @ApiPropertyOptional({ description: 'Seguro del paciente' })
   @IsOptional()
   @IsString()

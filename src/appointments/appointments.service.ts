@@ -168,6 +168,7 @@ export class AppointmentsService {
         notes: dto.notes || null,
         patientName: dto.patientName || null,
         patientDni: dto.patientDni || null,
+        patientBirthDate: dto.patientBirthDate || null,
         insurance: dto.insurance || null,
       },
       include: APPOINTMENT_INCLUDE,
