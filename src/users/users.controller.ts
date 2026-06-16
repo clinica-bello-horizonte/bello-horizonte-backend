@@ -13,9 +13,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Post } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { BirthDateChangeRequestDto } from './dto/birthdate-change-request.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -54,6 +56,19 @@ export class UsersController {
     @Body('token') token: string,
   ) {
     return this.usersService.saveFcmToken(userId, token);
+  }
+
+  @Post('birthdate-change-request')
+  @ApiOperation({
+    summary:
+      'Solicitar a la clínica el cambio de una fecha de nacimiento ya bloqueada',
+  })
+  @ApiResponse({ status: 201, description: 'Solicitud enviada a la clínica' })
+  requestBirthDateChange(
+    @CurrentUser('id') userId: string,
+    @Body() dto: BirthDateChangeRequestDto,
+  ) {
+    return this.usersService.requestBirthDateChange(userId, dto);
   }
 
   @Patch('change-password')

@@ -229,6 +229,7 @@ export class AuthService {
         firstName: true,
         lastName: true,
         birthDate: true,
+        birthDateLocked: true,
         role: true,
         photoUrl: true,
         createdAt: true,

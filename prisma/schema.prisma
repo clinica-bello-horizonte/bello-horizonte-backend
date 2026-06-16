@@ -36,6 +36,7 @@ model User {
   firstName    String   @map("first_name")
   lastName     String   @map("last_name")
   birthDate    String?  @map("birth_date")
+  birthDateLocked Boolean @default(false) @map("birth_date_locked")
   passwordHash String   @map("password_hash")
   role         Role     @default(USER)
   fcmToken     String?  @map("fcm_token")
