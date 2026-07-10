@@ -28,7 +28,8 @@ export class EmailService {
     reason?: string;
   }) {
     const clinicEmail =
-      this.config.get('CLINIC_EMAIL') ?? 'contacto@bellohorizonte.pe';
+      this.config.get('CLINIC_EMAIL') ??
+      'administracion@clinicabellohorizonte.com.pe';
     try {
       await this.resend.emails.send({
         from: this.from,
